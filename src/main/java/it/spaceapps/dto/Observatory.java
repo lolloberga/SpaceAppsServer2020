@@ -1,18 +1,30 @@
 package it.spaceapps.dto;
 
-import java.util.Date;
+import java.util.List;
+
+import it.spaceapps.dto.otherinformation.OtherInformation;
 
 public class Observatory {
-	private String id;
-	private String name;
-	private String start;
-	private String end;
+	private String id; //id
+	private String name; //name of observatory
+	private String start; //start service
+	private String end; //time limit to get position / end service
+	private String description; //description of observatory
+	private String url; //image url of observatory
+	private String resourceId; //resourceId for extra detail
+	private List<OtherInformation> Details; //extra details
 	
-	public Observatory(String id, String name, String start, String end) {
+	public Observatory() {
+		
+	}
+	
+	public Observatory(String id, String name, String start, String end, String resourceId, String description) {
 		this.id = id;
 		this.name = name;
 		this.start = start;
 		this.end = end;
+		this.resourceId = resourceId;
+		this.description = description;
 	}
 	
 	public String getId() {
@@ -38,6 +50,38 @@ public class Observatory {
 	}
 	public void setEnd(String end) {
 		this.end = end;
+	}
+
+	public String getResourceId() {
+		return resourceId;
+	}
+
+	public void setResourceId(String resourceId) {
+		this.resourceId = resourceId;
+	}
+
+	public String getDescription() {
+		return description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
+	}
+
+	public String getUrl() {
+		return url;
+	}
+
+	public void setUrl(String url) {
+		this.url = url;
+	}
+
+	public List<OtherInformation> getInformationUrl() {
+		return Details;
+	}
+
+	public void setInformationUrl(List<OtherInformation> informationUrl) {
+		Details = informationUrl;
 	}
 	
 	
