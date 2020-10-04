@@ -177,7 +177,7 @@ public class ObservatoriesManager {
 		    
 		   if(_obj.get("InformationURL") instanceof JSONObject) {
 			   JSONObject _objOtherInformation = _obj.getJSONObject("InformationURL");
-			   _list.add(new OtherInformation(_obj.getString("Name"), _obj.getString("URL"), _obj.getString("Description")));
+			   _list.add(new OtherInformation(_objOtherInformation.getString("Name"), _objOtherInformation.getString("URL"), _objOtherInformation.getString("Description")));
 		   } else {
 			   JSONArray _objOtherInformation = _obj.getJSONArray("InformationURL");
 			    
