@@ -53,7 +53,7 @@ public class Service {
 	
 	@RequestMapping(value = "/observatories/locations/{id}", method = RequestMethod.GET, produces = "application/json")
 	@ResponseBody
-	public ResponseEntity<String> getLocations(@PathVariable(name = "id") String id, @RequestParam(value = "end")String end) {
-		return obsManager.getLocations(id, end);
+	public ResponseEntity<String> getLocationsWithData(@PathVariable(name = "id") String id, @RequestParam(value = "end")String end, @RequestParam(value = "start", required = false)String start) {
+		return obsManager.getLocations(id, end, start);
 	}
 }

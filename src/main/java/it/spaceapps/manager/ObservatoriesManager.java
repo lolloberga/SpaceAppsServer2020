@@ -221,10 +221,10 @@ public class ObservatoriesManager {
 		}
 	}
 	
-	public ResponseEntity<String> getLocations(String id, String end) {
+	public ResponseEntity<String> getLocations(String id, String end, String start) {
 		if(end == null || (end != null && end.equals(""))) {
 			JSONObject jObj = new JSONObject();
-			jObj.put("error", "Paarameter 'end' is missing");
+			jObj.put("error", "Parameter 'end' is missing");
 			return new ResponseEntity<String>(Adapter.getJson(jObj), HttpStatus.BAD_REQUEST);
 		}
 		try {
@@ -234,14 +234,21 @@ public class ObservatoriesManager {
 			
 			SimpleDateFormat formatToParse = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 			
-			
-			String _dateStart = myDate.format(new Date()) + "000000Z";
-			
-			String _dateEnd = formatToParse.format(new Date());
-			
 			SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 			
 			SimpleDateFormat fullDate = new SimpleDateFormat("yyyyMMdd'T'HHmmss'Z'");
+			
+			String _dateStart = myDate.format(new Date()) + "000000Z";
+			if(start != null && !start.equals("")) {
+				SimpleDateFormat inputDate = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+				try {
+					_dateStart = myDate.format(inputDate.parse(start)) + "000000Z";
+				} catch (ParseException e) {
+					_dateStart = myDate.format(new Date()) + "000000Z";
+				}
+			}
+			
+			String _dateEnd = formatToParse.format(new Date());
 
 			Date dateEndObs = format.parse(end.replaceAll("T", " ").replaceAll("Z", ""));
 			Date dateEndNow = format.parse(_dateEnd);
