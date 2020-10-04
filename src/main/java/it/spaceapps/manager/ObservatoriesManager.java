@@ -7,6 +7,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.invoke.VarHandle;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
@@ -14,8 +15,14 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.TimeZone;
 
 import javax.xml.parsers.ParserConfigurationException;
 
@@ -35,6 +42,7 @@ import org.xml.sax.SAXException;
 
 import it.spaceapps.adapter.Adapter;
 import it.spaceapps.dto.Observatory;
+import it.spaceapps.dto.locations.Locations;
 import it.spaceapps.dto.otherinformation.OtherInformation;
 
 @Component
@@ -206,6 +214,142 @@ public class ObservatoriesManager {
 			jObj.put("error", e.getMessage());
 			return new ResponseEntity<String>(Adapter.getJson(jObj), HttpStatus.BAD_REQUEST);
 		} catch (InterruptedException e) {
+			e.printStackTrace();
+			JSONObject jObj = new JSONObject();
+			jObj.put("error", e.getMessage());
+			return new ResponseEntity<String>(Adapter.getJson(jObj), HttpStatus.BAD_REQUEST);
+		}
+	}
+	
+	public ResponseEntity<String> getLocations(String id, String end) {
+		if(end == null || (end != null && end.equals(""))) {
+			JSONObject jObj = new JSONObject();
+			jObj.put("error", "Paarameter 'end' is missing");
+			return new ResponseEntity<String>(Adapter.getJson(jObj), HttpStatus.BAD_REQUEST);
+		}
+		try {
+			
+			SimpleDateFormat myDate = new SimpleDateFormat("yyyyMMdd'T'");
+			myDate.setTimeZone(TimeZone.getTimeZone("UTC"));
+			
+			SimpleDateFormat formatToParse = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+			
+			
+			String _dateStart = myDate.format(new Date()) + "000000Z";
+			
+			String _dateEnd = formatToParse.format(new Date());
+			
+			SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+			
+			SimpleDateFormat fullDate = new SimpleDateFormat("yyyyMMdd'T'HHmmss'Z'");
+
+			Date dateEndObs = format.parse(end.replaceAll("T", " ").replaceAll("Z", ""));
+			Date dateEndNow = format.parse(_dateEnd);
+
+			if (dateEndObs.compareTo(dateEndNow) <= 0) {
+				//date end of obs is before tday
+				Calendar cal = Calendar.getInstance();
+				cal.setTime(dateEndObs);
+				cal.add(Calendar.HOUR, -12);
+				_dateStart = fullDate.format(cal.getTime());
+				_dateEnd = fullDate.format(dateEndObs);
+			}else {
+				_dateEnd = myDate.format(new Date()) + "120000Z";
+			}
+			
+			URL obj = new URL(endpointSSC + "/locations/" + id + "/" + _dateStart + "," + _dateEnd + "/geo");
+			
+			Document root = Adapter.getDOM(obj);
+			NodeList nList = root.getElementsByTagName("Result");
+			
+			List<Locations> result = new ArrayList<Locations>();
+			
+			//Create model list of observatory
+			
+			for(int temp = 0; temp < nList.getLength(); temp++) {
+				
+				Node nNode = nList.item(temp);
+				
+				if (nNode.getNodeType() == Node.ELEMENT_NODE) {
+					
+					Element eElement = (Element) nNode;
+					
+					NodeList data = eElement.getElementsByTagName("Data");
+					
+					for(int i = 0; i < data.getLength(); i++) {
+						Node nNodeData = data.item(i);
+						
+						if (nNodeData.getNodeType() == Node.ELEMENT_NODE) {
+							
+							Element eElementData = (Element) nNodeData;
+							
+							NodeList coordinates = eElementData.getElementsByTagName("Coordinates");
+							
+							for(int z = 0; z < coordinates.getLength(); z++) {
+								
+								Node nNodeCoord = coordinates.item(z);
+								
+								if (nNodeCoord.getNodeType() == Node.ELEMENT_NODE) {
+									Element eElementCoords = (Element) nNodeCoord;
+									
+									NodeList nNodeX = eElementCoords.getElementsByTagName("X");
+									NodeList nNodeY = eElementCoords.getElementsByTagName("Y");
+									NodeList nNodeZ = eElementCoords.getElementsByTagName("Z");
+									NodeList nNodeLatitude = eElementCoords.getElementsByTagName("Latitude");
+									NodeList nNodeLongitude = eElementCoords.getElementsByTagName("Longitude");
+									
+									for(int p = 0; p < nNodeX.getLength(); p++) {
+										Locations _location = new Locations();
+										_location.setX(Double.parseDouble(nNodeX.item(p).getTextContent()));
+										_location.setY(Double.parseDouble(nNodeY.item(p).getTextContent()));
+										_location.setZ(Double.parseDouble(nNodeZ.item(p).getTextContent()));
+										_location.setLatitude(Double.parseDouble(nNodeLatitude.item(p).getTextContent()));
+										_location.setLongitude(Double.parseDouble(nNodeLongitude.item(p).getTextContent()));
+										result.add(_location);
+									}
+								}
+							}
+							
+							NodeList times = eElementData.getElementsByTagName("Time");
+							NodeList radialLength = eElementData.getElementsByTagName("RadialLength");
+							
+							for(int p = 0; p < times.getLength(); p++) {								
+								result.get(p).setTime(times.item(p).getTextContent());
+								result.get(p).setRadialLength(Double.parseDouble(radialLength.item(p).getTextContent()));
+							}
+						}
+					}
+				}
+			}
+			
+			return new ResponseEntity<String>(Adapter.getJson(result), HttpStatus.OK);
+			
+		} catch (MalformedURLException e) {
+			e.printStackTrace();
+			JSONObject jObj = new JSONObject();
+			jObj.put("error", e.getMessage());
+			return new ResponseEntity<String>(Adapter.getJson(jObj), HttpStatus.BAD_REQUEST);
+		} catch (IOException e) {
+			e.printStackTrace();
+			JSONObject jObj = new JSONObject();
+			jObj.put("error", e.getMessage());
+			return new ResponseEntity<String>(Adapter.getJson(jObj), HttpStatus.BAD_REQUEST);
+		} catch (ParserConfigurationException e) {
+			e.printStackTrace();
+			JSONObject jObj = new JSONObject();
+			jObj.put("error", e.getMessage());
+			return new ResponseEntity<String>(Adapter.getJson(jObj), HttpStatus.BAD_REQUEST);
+		} catch (SAXException e) {
+			e.printStackTrace();
+			JSONObject jObj = new JSONObject();
+			jObj.put("error", e.getMessage());
+			return new ResponseEntity<String>(Adapter.getJson(jObj), HttpStatus.BAD_REQUEST);
+		} catch (DOMException e) {
+			e.printStackTrace();
+			JSONObject jObj = new JSONObject();
+			jObj.put("error", e.getMessage());
+			return new ResponseEntity<String>(Adapter.getJson(jObj), HttpStatus.BAD_REQUEST);
+		} catch (ParseException e) {
 			e.printStackTrace();
 			JSONObject jObj = new JSONObject();
 			jObj.put("error", e.getMessage());

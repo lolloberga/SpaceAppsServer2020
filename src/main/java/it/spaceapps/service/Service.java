@@ -50,4 +50,10 @@ public class Service {
 	public ResponseEntity<String> getDetail(@RequestParam(value = "resourceId")String resourceId) {
 		return obsManager.getDetail(resourceId);
 	}
+	
+	@RequestMapping(value = "/observatories/locations/{id}", method = RequestMethod.GET, produces = "application/json")
+	@ResponseBody
+	public ResponseEntity<String> getLocations(@PathVariable(name = "id") String id, @RequestParam(value = "end")String end) {
+		return obsManager.getLocations(id, end);
+	}
 }
