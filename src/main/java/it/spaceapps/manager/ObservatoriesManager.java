@@ -1,13 +1,10 @@
 package it.spaceapps.manager;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.lang.invoke.VarHandle;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
@@ -20,13 +17,11 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.TimeZone;
 
 import javax.xml.parsers.ParserConfigurationException;
 
-import org.apache.catalina.Server;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
@@ -180,19 +175,24 @@ public class ObservatoriesManager {
 		    
 		    List<OtherInformation> _list = new ArrayList<OtherInformation>();
 		    
-		    JSONArray _objOtherInformation = _obj.getJSONArray("InformationURL");
-		    
-		    for(int i = 0; i < _objOtherInformation.length(); i++) {
-		    	
-		    	JSONObject _json = _objOtherInformation.getJSONObject(i);
-		    	
-		    	String name = _json.getString("Name");
-		    	String URL = _json.getString("URL");
-		    	String description = _json.getString("Description");
-		    	
-		    	_list.add(new OtherInformation(name, URL, description));
-		    	
-		    }
+		   if(_obj.get("InformationURL") instanceof JSONObject) {
+			   JSONObject _objOtherInformation = _obj.getJSONObject("InformationURL");
+			   _list.add(new OtherInformation(_obj.getString("Name"), _obj.getString("URL"), _obj.getString("Description")));
+		   } else {
+			   JSONArray _objOtherInformation = _obj.getJSONArray("InformationURL");
+			    
+			    for(int i = 0; i < _objOtherInformation.length(); i++) {
+			    	
+			    	JSONObject _json = _objOtherInformation.getJSONObject(i);
+			    	
+			    	String name = _json.getString("Name");
+			    	String URL = _json.getString("URL");
+			    	String description = _json.getString("Description");
+			    	
+			    	_list.add(new OtherInformation(name, URL, description));
+			    	
+			    }
+		   }
 		    
 		    _obs.setInformationUrl(_list);
 			
